@@ -25,9 +25,9 @@ async function flushQueue() {
     try {
       const payload = JSON.parse(row.payload);
       if (row.operation === 'DELETE') {
-        await supabase.from(row.table_name).delete().eq('id', row.record_id);
+        await (supabase.from(row.table_name as any) as any).delete().eq('id', row.record_id);
       } else {
-        await supabase.from(row.table_name).upsert(payload);
+        await (supabase.from(row.table_name as any) as any).upsert(payload);
       }
       await db.runAsync(`DELETE FROM sync_queue WHERE id = ?`, [row.id]);
       await db.runAsync(
