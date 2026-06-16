@@ -1,4 +1,4 @@
-import { openDatabaseSync } from 'expo-sqlite';
+import { openDatabaseSync, type SQLiteBindParams, type SQLiteRunResult } from 'expo-sqlite';
 
 const db = openDatabaseSync('flowday.db');
 
@@ -6,17 +6,17 @@ const db = openDatabaseSync('flowday.db');
 db.execSync('PRAGMA journal_mode = WAL;');
 db.execSync('PRAGMA foreign_keys = ON;');
 
-// Async wrapper around the synchronous API for backwards compatibility
-export const runAsync = (sql: string, params?: any[]): Promise<void> => {
-  return Promise.resolve(db.runSync(sql, params));
+// Async wrapper around the synchronous API
+export const runAsync = (sql: string, params?: SQLiteBindParams): Promise<SQLiteRunResult> => {
+  return Promise.resolve(db.runSync(sql, params as SQLiteBindParams));
 };
 
-export const getAllAsync = <T>(sql: string, params?: any[]): Promise<T[]> => {
-  return Promise.resolve(db.getAllSync(sql, params) as T[]);
+export const getAllAsync = <T>(sql: string, params?: SQLiteBindParams): Promise<T[]> => {
+  return Promise.resolve(db.getAllSync(sql, params as SQLiteBindParams) as T[]);
 };
 
-export const getFirstAsync = <T>(sql: string, params?: any[]): Promise<T | null> => {
-  return Promise.resolve((db.getFirstSync(sql, params) as T) ?? null);
+export const getFirstAsync = <T>(sql: string, params?: SQLiteBindParams): Promise<T | null> => {
+  return Promise.resolve((db.getFirstSync(sql, params as SQLiteBindParams) as T) ?? null);
 };
 
 export const execAsync = (sql: string): Promise<void> => {

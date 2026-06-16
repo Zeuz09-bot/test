@@ -36,6 +36,7 @@ export function FocusTimer({ taskId }: { taskId?: string }) {
       session_type: 'pomodoro',
       planned_minutes: 25,
       started_at: new Date().toISOString(),
+      completed: 0,
     });
   };
 
@@ -47,6 +48,7 @@ export function FocusTimer({ taskId }: { taskId?: string }) {
       session_type: 'freeform',
       planned_minutes: 60,
       started_at: new Date().toISOString(),
+      completed: 0,
     });
   };
 

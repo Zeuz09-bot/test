@@ -10,5 +10,7 @@ export async function startFocusSession(taskId: string) {
     user_id: user?.id ?? '',
     session_type: 'pomodoro',
     planned_minutes: 25,
+    started_at: new Date().toISOString(),
+    completed: 0,
   });
 }

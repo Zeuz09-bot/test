@@ -43,9 +43,11 @@ export const useHabitStore = create<HabitState>((set, get) => ({
        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       [id, userId, data.title, data.frequency ?? 'daily', data.custom_days ?? null, data.reminder_time ?? null, 0, 0, data.sort_order ?? 0, now, now]
     );
-    await enqueueSync('INSERT', 'habits', id, { id, user_id: userId, ...data, created_at: now, updated_at: now });
+    const { user_id: _uid, ...rest } = data;
+    void _uid;
+    await enqueueSync('INSERT', 'habits', id, { id, user_id: userId, ...rest, created_at: now, updated_at: now });
     await get().loadHabits();
-    return { id, user_id: userId, ...data, created_at: now, updated_at: now, deleted_at: null, synced_at: null } as Habit;
+    return { id, user_id: userId, ...rest, created_at: now, updated_at: now, deleted_at: null, synced_at: null } as Habit;
   },
   updateHabit: async (id, data) => {
     const now = new Date().toISOString();
@@ -66,7 +68,7 @@ export const useHabitStore = create<HabitState>((set, get) => ({
     await db.runAsync(
       `INSERT OR REPLACE INTO habit_logs (id, habit_id, user_id, log_date, completed, completed_at, created_at)
        VALUES (?, ?, ?, ?, 1, ?, ?)`,
-      [crypto.randomUUID(), habitId, (await db.getFirstAsync<{ user_id: string }>(`SELECT user_id FROM habits WHERE id = ?`, [habitId])).user_id, logDate, now, now]
+      [crypto.randomUUID(), habitId, (await db.getFirstAsync<{ user_id: string }>(`SELECT user_id FROM habits WHERE id = ?`, [habitId]))?.user_id ?? '', logDate, now, now]
     );
     await enqueueSync('INSERT', 'habit_logs', crypto.randomUUID(), { habit_id: habitId, log_date: logDate, completed: 1, completed_at: now, created_at: now });
     await get().loadHabitLogs();

@@ -14,7 +14,7 @@ export function GoalsScreen() {
         goals.map((goal) => (
           <View key={goal.id} style={styles.item}>
             <View style={styles.icon}>
-              <MaterialCommunityIcons name="bullseye" size="large" color="#222" />
+              <MaterialCommunityIcons name="bullseye" size={36} color="#222" />
             </View>
             <View style={styles.info}>
               <Text style={styles.label}>{goal.title}</Text>

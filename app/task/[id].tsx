@@ -149,6 +149,8 @@ const styles = StyleSheet.create({
   inProgressButton: { backgroundColor: '#1565C0' },
   focusButton: { backgroundColor: '#6A1B9A' },
   actionText: { color: '#fff', fontWeight: '600', fontSize: 14 },
+  button: { backgroundColor: '#222', borderRadius: 12, padding: 14, alignItems: 'center', marginTop: 24 },
+  buttonText: { color: '#fff', fontWeight: '600', fontSize: 15 },
   deleteButton: { alignItems: 'center', padding: 12 },
   deleteText: { color: '#E53935', fontSize: 14, fontWeight: '500' },
 });

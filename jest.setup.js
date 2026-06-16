@@ -13,10 +13,10 @@ jest.mock('@react-native-community/netinfo', () => ({
 }));
 
 jest.mock('react-native-mmkv', () => ({
-  MMKV: jest.fn(() => ({
+  createMMKV: jest.fn(() => ({
     getString: jest.fn(() => null),
     set: jest.fn(),
     getBoolean: jest.fn(() => false),
-    delete: jest.fn(),
+    remove: jest.fn(),
   })),
 }));

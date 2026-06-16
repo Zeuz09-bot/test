@@ -58,7 +58,9 @@ export const useGoalStore = create<GoalState>((set, get) => ({
        WHERE goal_id = ? AND deleted_at IS NULL`,
       [goalId]
     );
-    const pct = result?.total > 0 ? Math.round((result.completed / result.total) * 100) : 0;
+    const total = result?.total ?? 0;
+    const completed = result?.completed ?? 0;
+    const pct = total > 0 ? Math.round((completed / total) * 100) : 0;
     const now = new Date().toISOString();
     await db.runAsync(`UPDATE goals SET progress_pct = ?, updated_at = ? WHERE id = ?`, [pct, now, goalId]);
     await enqueueSync('UPDATE', 'goals', goalId, { id: goalId, progress_pct: pct, updated_at: now });

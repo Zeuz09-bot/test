@@ -1,6 +1,6 @@
-import { MMKV } from 'react-native-mmkv';
+import { createMMKV } from 'react-native-mmkv';
 
-const storage = new MMKV({ id: 'flowday-storage' });
+const storage = createMMKV({ id: 'flowday-storage' });
 
 export const storageKeys = {
   LAST_SYNC: 'last_sync_at',

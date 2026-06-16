@@ -42,9 +42,11 @@ export const useNoteStore = create<NoteState>((set, get) => ({
         now,
       ]
     );
-    await enqueueSync('INSERT', 'notes', id, { id, user_id: userId, ...data, created_at: now, updated_at: now });
+    const { user_id: _uid, ...rest } = data;
+    void _uid;
+    await enqueueSync('INSERT', 'notes', id, { id, user_id: userId, ...rest, created_at: now, updated_at: now });
     await get().loadNotes();
-    return { id, user_id: userId, ...data, created_at: now, updated_at: now, deleted_at: null, synced_at: null } as Note;
+    return { id, user_id: userId, ...rest, created_at: now, updated_at: now, deleted_at: null, synced_at: null } as Note;
   },
   updateNote: async (id, data) => {
     const now = new Date().toISOString();

@@ -30,7 +30,7 @@ export const useTaskStore = create<TaskState>((set, get) => ({
     set({
       tasks: rows,
       todaysTasks: rows.filter((t) => t.scheduled_date === today),
-      overdueTasks: rows.filter((t) => t.deadline !== null && t.deadline < today && t.status !== 'completed'),
+      overdueTasks: rows.filter((t) => t.deadline != null && t.deadline < today && t.status !== 'completed'),
     });
   },
   createTask: async (data) => {
@@ -44,9 +44,11 @@ export const useTaskStore = create<TaskState>((set, get) => ({
        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       [id, userId, data.title, data.description ?? null, data.priority ?? 'medium', data.status ?? 'pending', data.deadline ?? null, data.scheduled_date ?? null, data.scheduled_start_time ?? null, data.estimated_minutes ?? null, now, now]
     );
-    await enqueueSync('INSERT', 'tasks', id, { id, user_id: userId, ...data, created_at: now, updated_at: now });
+    const { user_id: _uid, ...rest } = data;
+    void _uid;
+    await enqueueSync('INSERT', 'tasks', id, { id, user_id: userId, ...rest, created_at: now, updated_at: now });
     await get().loadTasks();
-    return { id, user_id: userId, ...data, created_at: now, updated_at: now, deleted_at: null, synced_at: null } as Task;
+    return { id, user_id: userId, ...rest, created_at: now, updated_at: now, deleted_at: null, synced_at: null } as Task;
   },
   updateTask: async (id, data) => {
     const now = new Date().toISOString();

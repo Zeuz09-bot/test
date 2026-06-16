@@ -30,7 +30,7 @@ export const useFocusStore = create<FocusState>((set, get) => ({
     set({ activeSession: session });
   },
   endSession: async (sessionId) => {
-    const session: FocusSession = await db.getFirstAsync<FocusSession>(
+    const session = await db.getFirstAsync<FocusSession>(
       `SELECT * FROM focus_sessions WHERE id = ?`,
       [sessionId]
     );
