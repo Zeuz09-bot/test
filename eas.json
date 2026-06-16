@@ -1,19 +1,26 @@
 {
+  "cli": {
+    "version": ">= 20.1.0",
+    "promptToConfigure": false
+  },
   "build": {
     "development": {
       "developmentClient": true,
       "distribution": "internal",
+      "android": {
+        "buildType": "apk"
+      },
       "env": {
         "APP_ENV": "development"
       }
     },
-    "staging": {
+    "preview": {
       "distribution": "internal",
-      "env": {
-        "APP_ENV": "staging"
-      },
       "android": {
         "buildType": "apk"
+      },
+      "env": {
+        "APP_ENV": "staging"
       }
     },
     "production": {
@@ -24,14 +31,6 @@
     }
   },
   "submit": {
-    "production": {
-      "ios": {
-        "appleId": "your@apple.id",
-        "ascAppId": "123456789"
-      },
-      "android": {
-        "serviceAccountKeyPath": "./google-service-account.json"
-      }
-    }
+    "production": {}
   }
 }
