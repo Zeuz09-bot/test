@@ -1,5 +1,5 @@
-import { serve } from 'https://deno.land/x/sift@0.5.1/mod.ts';
-import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
+import { serve } from 'https://deno.land/std@0.224.0/http/server.ts';
+import { createClient } from 'npm:@supabase/supabase-js@2';
 
 const supabaseUrl = Deno.env.get('SUPABASE_URL') ?? '';
 const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '';
@@ -24,7 +24,7 @@ serve(async (req) => {
       return new Response(JSON.stringify({ error: 'Missing user_id' }), { status: 400 });
     }
 
-    // 1. Fetch all active habits
+    // Fetch all active habits
     const { data: habits, error: habitsError } = await supabase
       .from('habits')
       .select('id, current_streak, longest_streak')
@@ -33,7 +33,7 @@ serve(async (req) => {
 
     if (habitsError) throw habitsError;
 
-    // 2. Fetch all completed habit logs
+    // Fetch all completed habit logs
     const { data: logs, error: logsError } = await supabase
       .from('habit_logs')
       .select('habit_id, log_date')
@@ -49,7 +49,6 @@ serve(async (req) => {
     for (const habit of habits || []) {
       const habitLogs = logs?.filter(l => l.habit_id === habit.id) || [];
       if (habitLogs.length === 0) {
-        // No logs, streak is 0
         if (habit.current_streak !== 0) {
           await supabase.from('habits').update({ current_streak: 0, updated_at: new Date().toISOString() }).eq('id', habit.id);
         }
@@ -61,10 +60,8 @@ serve(async (req) => {
       let longestStreak = habit.longest_streak || 0;
       let checkDate = today;
 
-      // Group logs by date to avoid duplicates
       const completedDates = new Set(habitLogs.map(l => l.log_date));
 
-      // Calculate current streak
       if (completedDates.has(today)) {
         currentStreak++;
         checkDate = getPreviousDay(today);
@@ -83,12 +80,10 @@ serve(async (req) => {
         }
       }
 
-      // Calculate longest streak historically from all completed logs
       let currentLongestCount = 0;
       let tempStreak = 0;
       let lastDate: string | null = null;
 
-      // Sort unique dates ascending to count maximum consecutive sequence
       const sortedUniqueDates = Array.from(completedDates).sort();
 
       for (const dateStr of sortedUniqueDates) {
@@ -111,11 +106,7 @@ serve(async (req) => {
       if (habit.current_streak !== currentStreak || habit.longest_streak !== longestStreak) {
         await supabase
           .from('habits')
-          .update({
-            current_streak: currentStreak,
-            longest_streak: longestStreak,
-            updated_at: new Date().toISOString()
-          })
+          .update({ current_streak: currentStreak, longest_streak: longestStreak, updated_at: new Date().toISOString() })
           .eq('id', habit.id);
       }
 

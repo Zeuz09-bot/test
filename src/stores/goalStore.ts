@@ -1,12 +1,13 @@
 import { create } from 'zustand';
 import db from '../db/client';
 import { enqueueSync } from '../sync/queue';
-import type { Goal } from '../types/goal';
+import { useAuthStore } from './authStore';
+import type { Goal, CreateGoalInput } from '../types/goal';
 
 interface GoalState {
   goals: Goal[];
   loadGoals: () => Promise<void>;
-  createGoal: (data: Omit<Goal, 'id' | 'user_id' | 'created_at' | 'updated_at' | 'deleted_at' | 'synced_at'>) => Promise<Goal>;
+  createGoal: (data: CreateGoalInput) => Promise<Goal>;
   updateGoal: (id: string, data: Partial<Goal>) => Promise<void>;
   deleteGoal: (id: string) => Promise<void>;
   recomputeGoalProgress: (goalId: string) => Promise<void>;
@@ -21,16 +22,19 @@ export const useGoalStore = create<GoalState>((set, get) => ({
     set({ goals: rows });
   },
   createGoal: async (data) => {
+    const user = useAuthStore.getState().user;
+    if (!user) throw new Error('Not authenticated');
+    const userId = user.id;
     const id = crypto.randomUUID();
     const now = new Date().toISOString();
     await db.runAsync(
       `INSERT INTO goals (id, user_id, title, category, target_date, progress_pct, status, notes, created_at, updated_at)
        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-      [id, data.user_id, data.title, data.category, data.target_date ?? null, data.progress_pct ?? 0, data.status ?? 'active', data.notes ?? null, now, now]
+      [id, userId, data.title, data.category, data.target_date ?? null, data.progress_pct ?? 0, data.status ?? 'active', data.notes ?? null, now, now]
     );
-    await enqueueSync('INSERT', 'goals', id, { id, user_id: data.user_id, ...data, created_at: now, updated_at: now });
+    await enqueueSync('INSERT', 'goals', id, { id, user_id: userId, ...data, created_at: now, updated_at: now });
     await get().loadGoals();
-    return { id, user_id: data.user_id, ...data, created_at: now, updated_at: now, deleted_at: null, synced_at: null } as Goal;
+    return { id, user_id: userId, ...data, created_at: now, updated_at: now, deleted_at: null, synced_at: null } as Goal;
   },
   updateGoal: async (id, data) => {
     const now = new Date().toISOString();

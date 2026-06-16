@@ -1,12 +1,13 @@
 import { create } from 'zustand';
 import db from '../db/client';
 import { enqueueSync } from '../sync/queue';
-import type { Note } from '../types/note';
+import { useAuthStore } from './authStore';
+import type { Note, CreateNoteInput } from '../types/note';
 
 interface NoteState {
   notes: Note[];
   loadNotes: () => Promise<void>;
-  createNote: (data: Omit<Note, 'id' | 'user_id' | 'created_at' | 'updated_at' | 'deleted_at' | 'synced_at'>) => Promise<Note>;
+  createNote: (data: CreateNoteInput) => Promise<Note>;
   updateNote: (id: string, data: Partial<Note>) => Promise<void>;
   deleteNote: (id: string) => Promise<void>;
   convertNoteToTask: (noteId: string) => Promise<void>;
@@ -21,6 +22,9 @@ export const useNoteStore = create<NoteState>((set, get) => ({
     set({ notes: rows });
   },
   createNote: async (data) => {
+    const user = useAuthStore.getState().user;
+    if (!user) throw new Error('Not authenticated');
+    const userId = user.id;
     const id = crypto.randomUUID();
     const now = new Date().toISOString();
     await db.runAsync(
@@ -28,7 +32,7 @@ export const useNoteStore = create<NoteState>((set, get) => ({
        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       [
         id,
-        data.user_id,
+        userId,
         data.goal_id ?? null,
         data.task_id ?? null,
         data.content,
@@ -38,9 +42,9 @@ export const useNoteStore = create<NoteState>((set, get) => ({
         now,
       ]
     );
-    await enqueueSync('INSERT', 'notes', id, { id, user_id: data.user_id, ...data, created_at: now, updated_at: now });
+    await enqueueSync('INSERT', 'notes', id, { id, user_id: userId, ...data, created_at: now, updated_at: now });
     await get().loadNotes();
-    return { id, user_id: data.user_id, ...data, created_at: now, updated_at: now, deleted_at: null, synced_at: null } as Note;
+    return { id, user_id: userId, ...data, created_at: now, updated_at: now, deleted_at: null, synced_at: null } as Note;
   },
   updateNote: async (id, data) => {
     const now = new Date().toISOString();

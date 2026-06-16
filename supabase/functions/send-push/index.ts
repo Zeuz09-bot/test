@@ -1,5 +1,5 @@
-import { serve } from 'https://deno.land/x/sift@0.5.1/mod.ts';
-import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
+import { serve } from 'https://deno.land/std@0.224.0/http/server.ts';
+import { createClient } from 'npm:@supabase/supabase-js@2';
 
 const supabaseUrl = Deno.env.get('SUPABASE_URL') ?? '';
 const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '';
@@ -9,15 +9,12 @@ const supabase = createClient(supabaseUrl, supabaseServiceKey);
 interface PushPayload {
   user_id: string;
   type: 'morning_briefing' | 'evening_review' | 'deadline_alert' | 'habit_reminder' | 'note_reminder';
-  data: {
-    [key: string]: any;
-  };
+  data: Record<string, unknown>;
 }
 
 serve(async (req) => {
   const { user_id, type, data }: PushPayload = await req.json();
 
-  // Get push token for user
   const { data: pushTokenData, error: tokenError } = await supabase
     .from('push_tokens')
     .select('token, platform')
@@ -28,7 +25,6 @@ serve(async (req) => {
     return new Response(JSON.stringify({ error: 'Push token not found' }), { status: 404 });
   }
 
-  // Expo push message
   const expoPushMessage = {
     to: pushTokenData.token,
     sound: 'default',
@@ -37,7 +33,6 @@ serve(async (req) => {
     data: { type, ...data },
   };
 
-  // Send to Expo Push API
   const expoResponse = await fetch('https://exp.host/--/api/v2/push/send', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },

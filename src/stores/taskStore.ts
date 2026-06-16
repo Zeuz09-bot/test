@@ -1,14 +1,15 @@
 import { create } from 'zustand';
 import db from '../db/client';
 import { enqueueSync } from '../sync/queue';
-import type { Task } from '../types/task';
+import { useAuthStore } from './authStore';
+import type { Task, CreateTaskInput } from '../types/task';
 
 interface TaskState {
   tasks: Task[];
   todaysTasks: Task[];
   overdueTasks: Task[];
   loadTasks: () => Promise<void>;
-  createTask: (data: Omit<Task, 'id' | 'user_id' | 'created_at' | 'updated_at' | 'deleted_at' | 'synced_at'>) => Promise<Task>;
+  createTask: (data: CreateTaskInput) => Promise<Task>;
   updateTask: (id: string, data: Partial<Task>) => Promise<void>;
   completeTask: (id: string) => Promise<void>;
   deleteTask: (id: string) => Promise<void>;
@@ -26,24 +27,26 @@ export const useTaskStore = create<TaskState>((set, get) => ({
          deadline ASC NULLS LAST`
     );
     const today = new Date().toISOString().split('T')[0];
-    const overdueCutoff = new Date().toISOString().split('T')[0];
     set({
       tasks: rows,
       todaysTasks: rows.filter((t) => t.scheduled_date === today),
-      overdueTasks: rows.filter((t) => t.deadline && t.deadline < overdueCutoff && t.status !== 'completed'),
+      overdueTasks: rows.filter((t) => t.deadline !== null && t.deadline < today && t.status !== 'completed'),
     });
   },
   createTask: async (data) => {
+    const user = useAuthStore.getState().user;
+    if (!user) throw new Error('Not authenticated');
+    const userId = user.id;
     const id = crypto.randomUUID();
     const now = new Date().toISOString();
     await db.runAsync(
       `INSERT INTO tasks (id, user_id, title, description, priority, status, deadline, scheduled_date, scheduled_start_time, estimated_minutes, created_at, updated_at)
        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-      [id, data.user_id, data.title, data.description ?? null, data.priority ?? 'medium', data.status ?? 'pending', data.deadline ?? null, data.scheduled_date ?? null, data.scheduled_start_time ?? null, data.estimated_minutes ?? null, now, now]
+      [id, userId, data.title, data.description ?? null, data.priority ?? 'medium', data.status ?? 'pending', data.deadline ?? null, data.scheduled_date ?? null, data.scheduled_start_time ?? null, data.estimated_minutes ?? null, now, now]
     );
-    await enqueueSync('INSERT', 'tasks', id, { id, user_id: data.user_id, ...data, created_at: now, updated_at: now });
+    await enqueueSync('INSERT', 'tasks', id, { id, user_id: userId, ...data, created_at: now, updated_at: now });
     await get().loadTasks();
-    return { id, user_id: data.user_id, ...data, created_at: now, updated_at: now, deleted_at: null, synced_at: null } as Task;
+    return { id, user_id: userId, ...data, created_at: now, updated_at: now, deleted_at: null, synced_at: null } as Task;
   },
   updateTask: async (id, data) => {
     const now = new Date().toISOString();

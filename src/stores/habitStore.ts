@@ -1,15 +1,16 @@
 import { create } from 'zustand';
 import db from '../db/client';
 import { enqueueSync } from '../sync/queue';
+import { useAuthStore } from './authStore';
 import { calculateStreak } from '../utils/streaks';
-import type { Habit, HabitLog } from '../types/habit';
+import type { Habit, HabitLog, CreateHabitInput } from '../types/habit';
 
 interface HabitState {
   habits: Habit[];
   habitLogs: HabitLog[];
   loadHabits: () => Promise<void>;
   loadHabitLogs: () => Promise<void>;
-  createHabit: (data: Omit<Habit, 'id' | 'user_id' | 'created_at' | 'updated_at' | 'deleted_at' | 'synced_at'>) => Promise<Habit>;
+  createHabit: (data: CreateHabitInput) => Promise<Habit>;
   updateHabit: (id: string, data: Partial<Habit>) => Promise<void>;
   deleteHabit: (id: string) => Promise<void>;
   checkInHabit: (habitId: string, logDate: string) => Promise<void>;
@@ -32,16 +33,19 @@ export const useHabitStore = create<HabitState>((set, get) => ({
     set({ habitLogs: rows });
   },
   createHabit: async (data) => {
+    const user = useAuthStore.getState().user;
+    if (!user) throw new Error('Not authenticated');
+    const userId = user.id;
     const id = crypto.randomUUID();
     const now = new Date().toISOString();
     await db.runAsync(
       `INSERT INTO habits (id, user_id, title, frequency, custom_days, reminder_time, current_streak, longest_streak, sort_order, created_at, updated_at)
        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-      [id, data.user_id, data.title, data.frequency ?? 'daily', data.custom_days ?? null, data.reminder_time ?? null, 0, 0, data.sort_order ?? 0, now, now]
+      [id, userId, data.title, data.frequency ?? 'daily', data.custom_days ?? null, data.reminder_time ?? null, 0, 0, data.sort_order ?? 0, now, now]
     );
-    await enqueueSync('INSERT', 'habits', id, { id, user_id: data.user_id, ...data, created_at: now, updated_at: now });
+    await enqueueSync('INSERT', 'habits', id, { id, user_id: userId, ...data, created_at: now, updated_at: now });
     await get().loadHabits();
-    return { id, user_id: data.user_id, ...data, created_at: now, updated_at: now, deleted_at: null, synced_at: null } as Habit;
+    return { id, user_id: userId, ...data, created_at: now, updated_at: now, deleted_at: null, synced_at: null } as Habit;
   },
   updateHabit: async (id, data) => {
     const now = new Date().toISOString();
