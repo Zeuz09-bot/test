@@ -3,6 +3,7 @@ import { MMKV } from 'react-native-mmkv';
 import type { Database } from '../types/supabase';
 
 const storage = new MMKV({ id: 'supabase-auth' });
+void Database; // Suppress unused import warning
 
 export const supabase = createClient<Database>(
   process.env.EXPO_PUBLIC_SUPABASE_URL!,

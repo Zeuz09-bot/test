@@ -3,6 +3,7 @@
   "version": "1.0.0",
   "main": "index.ts",
   "dependencies": {
+    "@expo/vector-icons": "^15.1.1",
     "@react-native-community/netinfo": "^12.0.1",
     "@sentry/react-native": "^8.14.0",
     "@supabase/supabase-js": "^2.108.1",

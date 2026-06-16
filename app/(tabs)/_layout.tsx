@@ -9,7 +9,6 @@ export default function TabsLayout() {
   // We can load data here if needed, but stores will load on demand
   return (
     <Tabs
-      listenerMode="back"
       screenOptions={{
         headerShown: false,
         tabBarActiveTintColor: '#222',
