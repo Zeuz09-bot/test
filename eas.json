@@ -1,8 +1,4 @@
 {
-  "cli": {
-    "version": ">= 20.1.0",
-    "promptToConfigure": false
-  },
   "build": {
     "development": {
       "developmentClient": true,
