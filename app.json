@@ -29,6 +29,13 @@
       "expo-sqlite",
       "expo-notifications",
       "expo-dev-client"
-    ]
+    ],
+    "extra": {
+      "router": {},
+      "eas": {
+        "projectId": "bef6b3a1-0f79-449c-80c5-2a004ab776bb"
+      }
+    },
+    "owner": "zeuz09-bot2"
   }
 }
