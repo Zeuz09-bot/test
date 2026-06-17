@@ -8,8 +8,7 @@
       },
       "env": {
         "APP_ENV": "development"
-      },
-      "installCommand": "npm install --legacy-peer-deps"
+      }
     },
     "preview": {
       "distribution": "internal",
